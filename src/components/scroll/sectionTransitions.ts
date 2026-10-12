@@ -64,6 +64,10 @@ export function registerSectionTransitions(scope: ParentNode, reducedMotion: boo
         gsap.set(outgoingHeading, {
           y: (reducedMotion ? 0 : -9) * progress,
           scale: mix(1, reducedMotion ? 1 : 0.992, progress),
+          rotationX: (reducedMotion ? 0 : -2.4) * progress,
+          transformPerspective: 1100,
+          transformOrigin: "50% 0%",
+          clipPath: reducedMotion ? "inset(0% 0% 0%)" : `inset(0% 0% ${6 * progress}%)`,
           letterSpacing: reducedMotion ? "" : `${0.004 * progress}em`,
         });
       }
@@ -71,6 +75,10 @@ export function registerSectionTransitions(scope: ParentNode, reducedMotion: boo
         gsap.set(incomingHeading, {
           y: (reducedMotion ? 0 : 12) * (1 - progress),
           scale: mix(reducedMotion ? 1 : 0.98, isAchievement ? 1.008 : 1, progress),
+          rotationX: (reducedMotion ? 0 : 5.5) * (1 - progress),
+          transformPerspective: 1100,
+          transformOrigin: "50% 100%",
+          clipPath: reducedMotion ? "inset(0% 0% 0%)" : `inset(${9 * (1 - progress)}% 0% 0%)`,
           letterSpacing: reducedMotion ? "" : `${0.009 * (1 - progress)}em`,
         });
       }
