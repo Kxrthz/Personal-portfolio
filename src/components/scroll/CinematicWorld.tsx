@@ -17,6 +17,7 @@ type WorldStop = {
   timeline: number;
   frame: number;
   fov: number;
+  roll?: number;
 };
 
 // One waypoint per real chapter, including each individual project. The scroll
@@ -24,11 +25,11 @@ type WorldStop = {
 const stops: WorldStop[] = [
   { camera: [0, 0, 8.2], look: [0, 0, 1.5], portal: [1.6, 0, 4.2], portalRotation: [0, 0, 0], portalScale: 1, grid: 0, timeline: 0, frame: 0, fov: 42 },
   { camera: [-0.45, 0.12, 7], look: [-0.25, 0, 0.4], portal: [-1.55, 0.14, 2.8], portalRotation: [0.08, -0.2, 0.22], portalScale: 1.18, grid: 0.12, timeline: 0, frame: 0.28, fov: 41 },
-  { camera: [0.28, 0.18, 5.8], look: [0.1, 0, -0.3], portal: [0, 0, 1.7], portalRotation: [0.16, 0.28, -0.1], portalScale: 0.9, grid: 1, timeline: 0, frame: 0.12, fov: 40 },
-  { camera: [0, 0.02, 4.8], look: [0, 0, -1], portal: [0, 0, 0.5], portalRotation: [0.02, 0, 0], portalScale: 1.18, grid: 0.48, timeline: 0, frame: 0.72, fov: 39 },
-  { camera: [-0.95, 0, 3.6], look: [-0.65, 0, -1.7], portal: [-0.85, 0.02, -0.25], portalRotation: [0, -0.12, -0.1], portalScale: 1.04, grid: 0.28, timeline: 0, frame: 1, fov: 38 },
-  { camera: [0.05, 0.08, 2.4], look: [0.15, 0, -2.1], portal: [0.12, 0.08, -1.55], portalRotation: [0.1, 0.1, 0.06], portalScale: 0.92, grid: 0.2, timeline: 0, frame: 1, fov: 38 },
-  { camera: [0.95, 0, 1.1], look: [0.6, 0, -2.4], portal: [1.05, 0, -2.9], portalRotation: [-0.08, 0.14, 0.16], portalScale: 1.08, grid: 0.35, timeline: 0, frame: 1, fov: 38 },
+  { camera: [0.28, 0.18, 5.8], look: [0.1, 0, -0.3], portal: [0, 0, 1.7], portalRotation: [0.16, 0.28, -0.1], portalScale: 0.9, grid: 1, timeline: 0, frame: 0.12, fov: 40, roll: 0.018 },
+  { camera: [0, 0.02, 4.8], look: [0, 0, -1], portal: [0, 0, 0.5], portalRotation: [0.02, 0, 0], portalScale: 1.18, grid: 0.48, timeline: 0, frame: 0.72, fov: 39, roll: 0.045 },
+  { camera: [-0.95, 0, 3.6], look: [-0.65, 0, -1.7], portal: [-0.85, 0.02, -0.25], portalRotation: [0, -0.12, -0.1], portalScale: 1.04, grid: 0.28, timeline: 0, frame: 1, fov: 38, roll: -0.035 },
+  { camera: [0.05, 0.08, 2.4], look: [0.15, 0, -2.1], portal: [0.12, 0.08, -1.55], portalRotation: [0.1, 0.1, 0.06], portalScale: 0.92, grid: 0.2, timeline: 0, frame: 1, fov: 38, roll: 0.028 },
+  { camera: [0.95, 0, 1.1], look: [0.6, 0, -2.4], portal: [1.05, 0, -2.9], portalRotation: [-0.08, 0.14, 0.16], portalScale: 1.08, grid: 0.35, timeline: 0, frame: 1, fov: 38, roll: -0.025 },
   { camera: [0.25, 0.08, -0.2], look: [0, 0, -3.1], portal: [0, 0, -4.1], portalRotation: [0, 0, 0], portalScale: 0.96, grid: 0.5, timeline: 1, frame: 0.58, fov: 39 },
   { camera: [-0.32, 0.12, -1.35], look: [-0.12, 0, -4.2], portal: [-0.45, 0.12, -5.1], portalRotation: [0.04, -0.08, -0.18], portalScale: 0.82, grid: 0.34, timeline: 0.52, frame: 0.82, fov: 40 },
   { camera: [0.3, 0.02, -2.5], look: [0.2, 0, -5.1], portal: [0.3, 0, -6.2], portalRotation: [0.02, 0.06, 0.08], portalScale: 0.76, grid: 0.56, timeline: 0.36, frame: 0.9, fov: 41 },
@@ -54,6 +55,7 @@ function sampleStop(progress: number) {
     portalRotation: sample("portalRotation") as number[], portalScale: sample("portalScale") as number,
     grid: sample("grid") as number, timeline: sample("timeline") as number,
     frame: sample("frame") as number, fov: sample("fov") as number,
+    roll: THREE.MathUtils.lerp(from.roll ?? 0, to.roll ?? 0, eased),
   };
 }
 
@@ -70,6 +72,7 @@ function CameraRig({ progress, reducedMotion }: { progress: ScrollProgress; redu
     camera.position.set(state.camera[0], state.camera[1], state.camera[2]);
     lookTarget.current.set(state.look[0], state.look[1], state.look[2]);
     camera.lookAt(lookTarget.current);
+    camera.rotation.z = reducedMotion ? 0 : state.roll;
     if (camera instanceof THREE.PerspectiveCamera && camera.fov !== state.fov) {
       camera.fov = state.fov;
       camera.updateProjectionMatrix();
@@ -162,12 +165,18 @@ function StoryGeometry({ progress, reducedMotion, mobile }: { progress: ScrollPr
     </group>
 
     <group ref={frame}>
-      <mesh>
+      {(mobile ? [0, 1] : [0, 1, 2, 3]).map((layer) => <mesh key={layer} position={[0, 0, -layer * 1.15]} scale={1 + layer * 0.16}>
         <boxGeometry args={[2.8, 1.6, 0.035]} />
-        <meshBasicMaterial ref={frameMaterial} color="#c99445" wireframe transparent opacity={0.12} depthWrite={false} />
-      </mesh>
+        <meshBasicMaterial ref={layer === 0 ? frameMaterial : undefined} color={layer % 2 === 0 ? "#c99445" : "#eeeae1"} wireframe transparent opacity={layer === 0 ? 0.12 : 0.12 / (layer + 1)} depthWrite={false} />
+      </mesh>)}
       <Line points={[[-1.8, -1.15, 0], [1.8, -1.15, 0]]} color="#eeeae1" transparent opacity={0.12} lineWidth={0.6} />
       <Line points={[[-1.8, 1.15, 0], [1.8, 1.15, 0]]} color="#eeeae1" transparent opacity={0.12} lineWidth={0.6} />
+      {!mobile && <>
+        <Line points={[[-1.8, -1.15, 0], [-2.66, -1.7, -3.45]]} color="#c99445" transparent opacity={0.12} lineWidth={0.5} />
+        <Line points={[[1.8, -1.15, 0], [2.66, -1.7, -3.45]]} color="#c99445" transparent opacity={0.12} lineWidth={0.5} />
+        <Line points={[[-1.8, 1.15, 0], [-2.66, 1.7, -3.45]]} color="#eeeae1" transparent opacity={0.08} lineWidth={0.5} />
+        <Line points={[[1.8, 1.15, 0], [2.66, 1.7, -3.45]]} color="#eeeae1" transparent opacity={0.08} lineWidth={0.5} />
+      </>}
     </group>
 
     <instancedMesh ref={cloud} args={[nodeGeometry, nodeMaterial, count]} />
