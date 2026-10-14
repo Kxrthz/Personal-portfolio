@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import type { Destination } from "../layout/Navigation";
+import { PirateEasterEgg } from "./PirateEasterEgg";
 
 type Entry = { command: string; output?: string };
 const commands = ["help", "about", "projects", "skills", "experience", "education", "certifications", "achievements", "contact", "coffee", "sudo hire-karthikeya", "clear"];
@@ -9,6 +10,7 @@ const commands = ["help", "about", "projects", "skills", "experience", "educatio
 export function InteractiveTerminal({ onNavigate, ending = false }: { onNavigate: (section: Destination) => void; ending?: boolean }) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<Entry[]>([]);
+  const [showPirate, setShowPirate] = useState(false);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -18,6 +20,12 @@ export function InteractiveTerminal({ onNavigate, ending = false }: { onNavigate
 
     if (command === "clear") {
       setHistory([]);
+      setShowPirate(false);
+      return;
+    }
+    if (command === "luffy" && ending) {
+      setShowPirate(true);
+      setHistory((items) => [...items, { command, output: "> A little pirate dropped by. Type 'clear' to send him off." }]);
       return;
     }
     if (command === "coffee") {
@@ -49,6 +57,7 @@ export function InteractiveTerminal({ onNavigate, ending = false }: { onNavigate
     <p className="ending-thanks">Thanks for visiting.</p>
     {history.map((entry, index) => <div className="command-entry ending-command-entry" key={`${entry.command}-${index}`}><p><span className="prompt-user">{ending ? "karthikeya@portfolio" : "karthikeya@dev"}</span><span className="prompt-path">:~$</span> {entry.command}</p>{entry.output && <p className="terminal-output">{entry.output}</p>}</div>)}
     <form className="ending-prompt" onSubmit={submit}><label className="sr-only" htmlFor="ending-terminal-command">Terminal command</label><span>karthikeya@portfolio:~$</span><input id="ending-terminal-command" value={input} onChange={(event) => setInput(event.target.value)} autoComplete="off" spellCheck={false} placeholder="_" aria-label="Final terminal command"/><button type="submit" data-cursor="hand" aria-label="Run terminal command">↵</button></form>
+    {showPirate && <PirateEasterEgg />}
   </div>;
 
   return <div className="terminal interactive-terminal" aria-label="Interactive developer terminal">
